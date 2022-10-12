@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/h2non/bimg"
-	//_ "github.com/h2non/bimg"
+	"github.com/davidbyttow/govips/v2/vips"
 	"net/http"
-	"strconv"
 )
 
 func init() {
@@ -37,12 +35,21 @@ func (m ProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next 
 		return err
 	}
 
-	options, err := getOptions(r)
+	//options, err := getOptions(r)
+	//if err != nil {
+	//	return err
+	//}
+
+	//fmt.Print(options)
+
+	vips.Startup(nil)
+	defer vips.Shutdown()
+
+	image1, err := vips.NewImageFromBuffer(rw.buf.Bytes())
 	if err != nil {
 		return err
 	}
-
-	fmt.Print(options)
+	fmt.Println(image1)
 
 	_, err = rw.Done()
 	if err != nil {
@@ -51,79 +58,81 @@ func (m ProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next 
 	return nil
 }
 
-func getOptions(r *http.Request) (bimg.Options, error) {
-	options := bimg.Options{
-		Enlarge:   true,
-		Interlace: true,
-	}
-
-	if len(r.FormValue("or")) > 0 {
-		orientation, err := strconv.Atoi(r.FormValue("or"))
-		if err != nil {
-			return options, err
-		}
-		options.Rotate = bimg.Angle(orientation)
-	}
-	//@TODO FLIP
-
-	//@TODO CROP NOT GLIDE COMPLIANT
-	if len(r.FormValue("crop")) > 0 {
-		crop, err := strconv.Atoi(r.FormValue("crop"))
-		if err != nil {
-			return options, err
-		}
-		options.Crop = crop == 1
-	}
-	if len(r.FormValue("w")) > 0 {
-		width, err := strconv.Atoi(r.FormValue("q"))
-		if err != nil {
-			return options, err
-		}
-		options.Width = width
-	}
-	if len(r.FormValue("h")) > 0 {
-		height, err := strconv.Atoi(r.FormValue("h"))
-		if err != nil {
-			return options, err
-		}
-		options.Height = height
-	}
-	//@TODO fit,dpr,bri,con,gam,sharp,
-	if len(r.FormValue("blur")) > 0 {
-		blur, err := strconv.ParseFloat(r.FormValue("blur"), 10)
-		if err != nil {
-			return options, err
-		}
-		options.GaussianBlur.Sigma = blur
-	}
-	//@TODO pixel,filt,mark,markw,markh,markx,marky,markpad,markpos,markalpha,bg,border
-
-	if len(r.FormValue("q")) > 0 {
-		quality, err := strconv.Atoi(r.FormValue("q"))
-		if err != nil {
-			return options, err
-		}
-		options.Quality = quality
-	}
-
-	if len(r.FormValue("fm")) > 0 {
-		format := r.FormValue("fm")
-		switch format {
-		case "jpg", "jpeg":
-			options.Type = bimg.JPEG
-		case "png":
-			options.Type = bimg.PNG
-		case "gif":
-			options.Type = bimg.GIF
-		case "webp":
-			options.Type = bimg.WEBP
-		case "avif":
-			options.Type = bimg.AVIF
-		}
-	}
-
-	return options, nil
-}
+//
+//func getOptions(r *http.Request) (bimg.Options, error) {
+//	vips.NewImageFromFile()
+//	options := bimg.Options{
+//		Enlarge:   true,
+//		Interlace: true,
+//	}
+//
+//	if len(r.FormValue("or")) > 0 {
+//		orientation, err := strconv.Atoi(r.FormValue("or"))
+//		if err != nil {
+//			return options, err
+//		}
+//		options.Rotate = bimg.Angle(orientation)
+//	}
+//	//@TODO FLIP
+//
+//	//@TODO CROP NOT GLIDE COMPLIANT
+//	if len(r.FormValue("crop")) > 0 {
+//		crop, err := strconv.Atoi(r.FormValue("crop"))
+//		if err != nil {
+//			return options, err
+//		}
+//		options.Crop = crop == 1
+//	}
+//	if len(r.FormValue("w")) > 0 {
+//		width, err := strconv.Atoi(r.FormValue("q"))
+//		if err != nil {
+//			return options, err
+//		}
+//		options.Width = width
+//	}
+//	if len(r.FormValue("h")) > 0 {
+//		height, err := strconv.Atoi(r.FormValue("h"))
+//		if err != nil {
+//			return options, err
+//		}
+//		options.Height = height
+//	}
+//	//@TODO fit,dpr,bri,con,gam,sharp,
+//	if len(r.FormValue("blur")) > 0 {
+//		blur, err := strconv.ParseFloat(r.FormValue("blur"), 10)
+//		if err != nil {
+//			return options, err
+//		}
+//		options.GaussianBlur.Sigma = blur
+//	}
+//	//@TODO pixel,filt,mark,markw,markh,markx,marky,markpad,markpos,markalpha,bg,border
+//
+//	if len(r.FormValue("q")) > 0 {
+//		quality, err := strconv.Atoi(r.FormValue("q"))
+//		if err != nil {
+//			return options, err
+//		}
+//		options.Quality = quality
+//	}
+//
+//	if len(r.FormValue("fm")) > 0 {
+//		format := r.FormValue("fm")
+//		switch format {
+//		case "jpg", "jpeg":
+//			options.Type = bimg.JPEG
+//		case "png":
+//			options.Type = bimg.PNG
+//		case "gif":
+//			options.Type = bimg.GIF
+//		case "webp":
+//			options.Type = bimg.WEBP
+//		case "avif":
+//			options.Type = bimg.AVIF
+//		}
+//	}
+//
+//	return options, nil
+//}
 
 // Interface guards
 var (

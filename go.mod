@@ -1,9 +1,9 @@
 module gitlab.com/alancolant/caddy-file-server
 
-go 1.18
+go 1.19
 
 require github.com/caddyserver/caddy/v2 v2.6.1
-require github.com/h2non/bimg v1.1.9
+require github.com/davidbyttow/govips/v2 v2.11.0
 
 require (
 	filippo.io/edwards25519 v1.0.0 // indirect
@@ -36,7 +36,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/cel-go v0.12.5 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/h2non/bimg v1.1.9 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
@@ -99,6 +98,7 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2 // indirect
 	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6 // indirect
+	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
 	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
