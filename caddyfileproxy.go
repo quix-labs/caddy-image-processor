@@ -1,7 +1,8 @@
-package CADDY_FILE_PROXY
+package CADDY_FILE_SERVER
 
 import (
 	"fmt"
+	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/h2non/bimg"
 	//_ "github.com/h2non/bimg"

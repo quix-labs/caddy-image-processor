@@ -1,4 +1,4 @@
-module example.com/caddy-file-proxy
+module gitlab.com/alancolant/caddy-file-server
 
 go 1.18
 

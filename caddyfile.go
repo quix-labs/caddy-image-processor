@@ -1,4 +1,4 @@
-package CADDY_FILE_PROXY
+package CADDY_FILE_SERVER
 
 import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"

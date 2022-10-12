@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/CADDY_FILE_PROXY.iml" filepath="$PROJECT_DIR$/.idea/CADDY_FILE_PROXY.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../CADDY_FILE_SERVER/.idea/CADDY_FILE_PROXY.iml" filepath="$PROJECT_DIR$/../CADDY_FILE_SERVER/.idea/CADDY_FILE_PROXY.iml" />
     </modules>
   </component>
 </project>
