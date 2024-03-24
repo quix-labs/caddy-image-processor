@@ -22,7 +22,7 @@ go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 To build this module into Caddy, run the following command:
 
 ```bash
-xcaddy build --with github.com/quix-labs/caddy-image-processor
+CGO_ENABLED=1 xcaddy build --with github.com/quix-labs/caddy-image-processor
 ```
 
 This command compiles Caddy with the image processing module included.
