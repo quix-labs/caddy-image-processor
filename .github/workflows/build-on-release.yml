@@ -39,7 +39,7 @@ jobs:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
         run: |
-          xcaddy build --output caddy-${{ matrix.os }}-${{ matrix.arch }} --with github.com/quix-labs/caddy-image-processor@latest
+          CGO_ENABLED=1 xcaddy build --output caddy-${{ matrix.os }}-${{ matrix.arch }} --with github.com/quix-labs/caddy-image-processor=.
 
       - name: Upload Release Asset (${{ matrix.os }}/${{ matrix.arch }})
         uses: actions/upload-release-asset@v1
