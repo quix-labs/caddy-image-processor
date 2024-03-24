@@ -40,18 +40,22 @@ jobs:
     needs: test
     strategy:
       matrix:
-        goos: [linux, windows]
-        goarch: [amd64]
+        os: [linux, windows]
+        arch: [amd64]
     steps:
-      - name: Build for ${{ matrix.goos }}/${{ matrix.goarch }}
+      - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
         run: |
-          xcaddy build --output caddy-${{ matrix.goos }}-${{ matrix.goarch }} --with github.com/quix-labs/caddy-image-processor@latest
-      - name: Upload Release Asset (${{ matrix.goos }}/${{ matrix.goarch }})
+          xcaddy build --output caddy-${{ matrix.os }}-${{ matrix.arch }} --with github.com/quix-labs/caddy-image-processor@latest
+
+      - name: Upload Release Asset (${{ matrix.os }}/${{ matrix.arch }})
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./caddy-${{ matrix.goos }}-${{ matrix.goarch }}
-          asset_name: caddy-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_path: ./caddy-${{ matrix.os }}-${{ matrix.arch }}
+          asset_name: caddy-${{ matrix.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
