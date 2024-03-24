@@ -1,3 +1,5 @@
+[![Build Static Releases](https://github.com/quix-labs/caddy-image-processor/actions/workflows/build-on-release.yml/badge.svg)](https://github.com/quix-labs/caddy-image-processor/actions/workflows/build-on-release.yml)
+
 # Caddy Image Processor
 
 This repository contains a CaddyServer module for processing images on the fly using libvips.

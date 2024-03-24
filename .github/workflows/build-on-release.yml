@@ -8,9 +8,6 @@ jobs:
   build:
     name: Build static releases
     runs-on: ubuntu-latest
-    env:
-      CADDY_VERSIONS: "v2.1.0,v2.2.3,v2.3.0,v2.4.6,v2.5.2,v2.6.4,v2.7.6,latest"
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,30 +29,16 @@ jobs:
         run: |
           sudo apt-get install -y libvips libvips-dev
 
-
-      - name: Build static releases
+      - name: Build static release
         run: |
-          for version in $(echo $CADDY_VERSIONS | tr ',' ' '); do
-            CGO_ENABLED=1 xcaddy build ${version} --output caddy-${version} --with github.com/quix-labs/caddy-image-processor=.
-          done
+          CGO_ENABLED=1 xcaddy build --output caddy-image-processor --with github.com/quix-labs/caddy-image-processor=.
 
-      - name: Upload Release Assets
-        run: |
-          for version in $(echo $CADDY_VERSIONS | tr ',' ' '); do
-            echo "Uploading caddy-${version}..."
-            curl \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @caddy-${version} \
-              -X POST "${{ github.event.release.upload_url }}/assets?name=caddy-${version}"
-          done
-#
-#      - name: Upload Release Asset (${{ matrix.os }}/${{ matrix.arch }})
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ github.event.release.upload_url }}
-#          asset_path: ./caddy-${{ matrix.os }}-${{ matrix.arch }}
-#          asset_name: caddy-${{ matrix.os }}-${{ matrix.arch }}
-#          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./caddy-image-processor
+          asset_name: caddy-image-processor-linux-amd64
+          asset_content_type: application/octet-stream
