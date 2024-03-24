@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	httpcaddyfile.RegisterHandlerDirective("image_proxy", parseCaddyfile)
+	httpcaddyfile.RegisterHandlerDirective("image_processor", parseCaddyfile)
 }
 
 func (m *ProxyMiddleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {

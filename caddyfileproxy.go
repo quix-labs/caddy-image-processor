@@ -12,12 +12,11 @@ func init() {
 	caddy.RegisterModule(ProxyMiddleware{})
 }
 
-type ProxyMiddleware struct {
-}
+type ProxyMiddleware struct{}
 
 func (ProxyMiddleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
-		ID:  "http.handlers.image_proxy",
+		ID:  "http.handlers.image_processor",
 		New: func() caddy.Module { return new(ProxyMiddleware) },
 	}
 }
@@ -45,7 +44,7 @@ func (m ProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next 
 		return err
 	}
 
-	w.Header().Set("Content-Length", string(len(newImage)))
+	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
 	w.Header().Set("Content-Type", "image/"+bimg.NewImage(newImage).Type())
 	_, err = w.Write(newImage)
 	if err != nil {

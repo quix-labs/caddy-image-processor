@@ -66,3 +66,33 @@ The following features are planned for future implementation:
 - CROP NOT GLIDE COMPLIANT parameter adjustments
 - Additional parameters: fit, dpr, bri, con, gam, sharp
 - Parameters for adding watermark: pixel, filt, mark, markw, markh, markx, marky, markpad, markpos, markalpha, bg, border
+
+## Development
+
+To contribute to the development of Caddy Image Processor, follow these steps:
+
+1. Make sure you have Go installed on your system.
+2. Clone this repository to your local machine:
+   ```bash
+   git clone https://github.com/quix-labs/caddy-image-processor.git
+   ```
+   
+3. Navigate to the project directory:
+4. Install `xcaddy` if you haven't already:
+    ```bash
+    go get -u github.com/caddyserver/xcaddy/cmd/xcaddy
+    ```
+5. Make your changes in the source code.
+6. Run tests to ensure your changes haven't introduced any issues:
+    ```bash
+   make test
+    ```
+7. If tests pass, you can build the project:
+    ```bash
+   make build
+    ```
+8. To run the project in development mode, use the following command:
+    ```bash
+   make run
+    ```
+9. Once you're satisfied with your changes, create a pull request to the main branch of the repository for review.
