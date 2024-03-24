@@ -24,7 +24,7 @@ jobs:
       - name: Install xcaddy
         run: |
           go get -u github.com/caddyserver/xcaddy/cmd/xcaddy
-          sudo mv $HOME/go/bin/xcaddy /usr/local/bin/xcaddy
+          sudo mv `go env GOPATH`/bin/xcaddy /usr/local/bin/xcaddy
 
       - name: Install libvips and libvips-dev
         run: |
