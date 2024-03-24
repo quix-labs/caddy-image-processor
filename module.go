@@ -40,28 +40,26 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		return err
 	}
 
+	if responseRecorder.Status() != 200 || responseRecorder.Size() == 0 {
+		return responseRecorder.WriteResponse()
+	}
+
 	options, err := getOptions(r)
 	if err != nil {
 		return err
 	}
 
-	recordedResponse := responseRecorder.Buffer()
-	if recordedResponse.Len() == 0 {
-		return next.ServeHTTP(w, r)
+	newImage, err := bimg.NewImage(responseRecorder.Buffer().Bytes()).Process(options)
+	if err != nil {
+		return responseRecorder.WriteResponse()
 	}
 
-	newImage, err := bimg.NewImage(recordedResponse.Bytes()).Process(options)
-	if err != nil {
-		// @TODO return base response on error if parameter set in caddy file
+	if _, err = w.Write(newImage); err != nil {
 		return err
 	}
 
 	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
 	w.Header().Set("Content-Type", "image/"+bimg.NewImage(newImage).Type())
-
-	if _, err = w.Write(newImage); err != nil {
-		return err
-	}
 
 	return nil
 }
