@@ -1,7 +1,10 @@
 package CADDY_FILE_SERVER
 
 import (
+	"bytes"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/h2non/bimg"
 	"net/http"
@@ -9,28 +12,31 @@ import (
 )
 
 func init() {
-	caddy.RegisterModule(ProxyMiddleware{})
+	caddy.RegisterModule(Middleware{})
+	httpcaddyfile.RegisterHandlerDirective("image_processor", parseCaddyfile)
 }
 
-type ProxyMiddleware struct{}
+type Middleware struct{}
 
-func (ProxyMiddleware) CaddyModule() caddy.ModuleInfo {
+func (Middleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
 		ID:  "http.handlers.image_processor",
-		New: func() caddy.Module { return new(ProxyMiddleware) },
+		New: func() caddy.Module { return new(Middleware) },
 	}
 }
 
-func (m ProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 
 	//Automatic return if not options set
 	if r.URL.RawQuery == "" {
 		return next.ServeHTTP(w, r)
 	}
 
-	rw := &ResponseWrapper{w: w}
-	err := next.ServeHTTP(rw, r)
-	if err != nil {
+	responseRecorder := caddyhttp.NewResponseRecorder(w, &bytes.Buffer{}, func(status int, header http.Header) bool {
+		return true
+	})
+
+	if err := next.ServeHTTP(responseRecorder, r); err != nil {
 		return err
 	}
 
@@ -39,18 +45,30 @@ func (m ProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next 
 		return err
 	}
 
-	newImage, err := bimg.NewImage(rw.buf.Bytes()).Process(options)
+	recordedResponse := responseRecorder.Buffer()
+	if recordedResponse.Len() == 0 {
+		return next.ServeHTTP(w, r)
+	}
+
+	newImage, err := bimg.NewImage(recordedResponse.Bytes()).Process(options)
 	if err != nil {
+		// @TODO return base response on error if parameter set in caddy file
 		return err
 	}
 
 	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
 	w.Header().Set("Content-Type", "image/"+bimg.NewImage(newImage).Type())
-	_, err = w.Write(newImage)
-	if err != nil {
+
+	if _, err = w.Write(newImage); err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	return nil
+
 }
 
 func getOptions(r *http.Request) (bimg.Options, error) {
@@ -128,7 +146,14 @@ func getOptions(r *http.Request) (bimg.Options, error) {
 	return options, nil
 }
 
+func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
+	var m Middleware
+	err := m.UnmarshalCaddyfile(h.Dispenser)
+	return m, err
+}
+
 // Interface guards
 var (
-	_ caddyhttp.MiddlewareHandler = (*ProxyMiddleware)(nil)
+	_ caddyhttp.MiddlewareHandler = (*Middleware)(nil)
+	_ caddyfile.Unmarshaler       = (*Middleware)(nil)
 )

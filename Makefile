@@ -25,5 +25,5 @@ test:
 clean:
 	rm -rf $(OUT_DIR)
 run:
-	$(XCADDY) run --with $(MODULE_PATH)=./
+	$(XCADDY) run
 	./$(OUT_DIR)/$(BINARY_NAME)

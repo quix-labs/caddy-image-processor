@@ -51,11 +51,14 @@ Follow these steps to utilize the image processing capabilities:
 
 ## Example Caddyfile
 ```plaintext
-example.com {
-  route /images* {
-    reverse_proxy localhost:8080
+{
+    order image_processor before respond
+}
+
+localhost {
+    root * /your-images-directory
+    file_server
     image_processor
-  }
 }
 ```
 
