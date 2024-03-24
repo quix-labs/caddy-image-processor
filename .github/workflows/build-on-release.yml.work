@@ -2,12 +2,16 @@ name: Build and Test
 
 on:
   release:
-    types: [created]
+    types: [ created ]
 
 jobs:
-  setup:
-    name: Setup Environment
+  build:
+    name: Build for different environments
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ linux ]
+        arch: [ amd64 ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,17 +29,9 @@ jobs:
           sudo apt update -y
           sudo apt install -y xcaddy
 
-  build:
-    name: Build for different environments
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        os: [linux]
-        arch: [amd64]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Install libvips and libvips-dev
+        run: |
+          sudo apt-get install -y libvips libvips-dev
 
       - name: Run tests
         run: go test -v ./...
