@@ -2,12 +2,16 @@ name: Build and Test
 
 on:
   release:
-    types: [created]
+    types: [ created ]
 
 jobs:
-  setup:
-    name: Setup Environment
+  build:
+    name: Build for different environments
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ linux, windows ]
+        arch: [ amd64 ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,7 +21,6 @@ jobs:
         with:
           go-version: "1.20"
 
-
       - name: Install xcaddy
         run: go get -u github.com/caddyserver/xcaddy/cmd/xcaddy
 
@@ -26,28 +29,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libvips libvips-dev
 
-#
-#      - name: Install xcaddy
-#        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-
-
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
       - name: Run tests
         run: go test -v ./...
 
-  build:
-    name: Build for different environments
-    runs-on: ubuntu-latest
-    needs: test
-    strategy:
-      matrix:
-        os: [linux, windows]
-        arch: [amd64]
-    steps:
       - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
         env:
           GOOS: ${{ matrix.os }}
