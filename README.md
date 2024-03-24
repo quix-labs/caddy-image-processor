@@ -102,3 +102,13 @@ To contribute to the development of Caddy Image Processor, follow these steps:
    make run
     ```
 9. Once you're satisfied with your changes, create a pull request to the main branch of the repository for review.
+
+## Credits
+
+- [COLANT Alan](https://github.com/alancolant)
+- [All Contributors](../../contributors)
+
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
