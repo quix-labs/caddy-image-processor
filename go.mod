@@ -1,9 +1,11 @@
-module gitlab.com/alancolant/caddy-file-server
+module github.com/quix-labs/caddy-image-processor
 
 go 1.19
 
-require github.com/caddyserver/caddy/v2 v2.6.1
-require github.com/davidbyttow/govips/v2 v2.11.0
+require (
+	github.com/caddyserver/caddy/v2 v2.6.1
+	github.com/h2non/bimg v1.1.9
+)
 
 require (
 	filippo.io/edwards25519 v1.0.0 // indirect
@@ -98,7 +100,6 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2 // indirect
 	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6 // indirect
-	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
 	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
