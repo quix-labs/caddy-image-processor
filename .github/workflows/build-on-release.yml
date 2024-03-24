@@ -1,12 +1,12 @@
-name: Build and Test
+name: Build Static Releases
 
 on:
   release:
     types: [ created ]
 
 jobs:
-  setup:
-    name: Setup Environment
+  build:
+    name: Build static releases
     runs-on: ubuntu-latest
     env:
       OS: "linux, windows"
@@ -28,6 +28,11 @@ jobs:
           curl -1sLf 'https://dl.cloudsmith.io/public/caddy/xcaddy/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-xcaddy.list
           sudo apt update -y
           sudo apt install -y xcaddy
+
+      - name: Install libvips and libvips-dev
+        run: |
+          sudo apt-get install -y libvips libvips-dev
+          
 
       - name: Build static releases
         run: |
