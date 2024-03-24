@@ -2,12 +2,16 @@ name: Build and Test
 
 on:
   release:
-    types: [created]
+    types: [ created ]
 
 jobs:
   setup:
     name: Setup Environment
     runs-on: ubuntu-latest
+    env:
+      OS: "linux, windows"
+      ARCH: "amd64, arm64"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,34 +29,33 @@ jobs:
           sudo apt update -y
           sudo apt install -y xcaddy
 
-  build:
-    name: Build for different environments
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        os: [linux]
-        arch: [amd64]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run tests
-        run: go test -v ./...
-
-      - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
-        env:
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
+      - name: Build static releases
         run: |
-          CGO_ENABLED=1 xcaddy build --output caddy-${{ matrix.os }}-${{ matrix.arch }} --with github.com/quix-labs/caddy-image-processor=.
+          for os in $(echo $OS | tr ',' ' '); do
+            for arch in $(echo $ARCH | tr ',' ' '); do
+              GOOS=${os} GOARCH=${arch} CGO_ENABLED=1 xcaddy build --output caddy-${os}-${arch} --with github.com/quix-labs/caddy-image-processor=.
+            done
+          done
 
-      - name: Upload Release Asset (${{ matrix.os }}/${{ matrix.arch }})
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./caddy-${{ matrix.os }}-${{ matrix.arch }}
-          asset_name: caddy-${{ matrix.os }}-${{ matrix.arch }}
-          asset_content_type: application/octet-stream
+      - name: Upload Release Assets
+        run: |
+          for os in $(echo $OS | tr ',' ' '); do
+            for arch in $(echo $ARCH | tr ',' ' '); do
+              echo "Uploading caddy-${os}-${arch}..."
+              curl \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Content-Type: application/octet-stream" \
+                --data-binary @caddy-${os}-${arch} \
+                -X POST "${{ github.event.release.upload_url }}/assets?name=caddy-${os}-${arch}"
+            done
+          done
+#
+#      - name: Upload Release Asset (${{ matrix.os }}/${{ matrix.arch }})
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ github.event.release.upload_url }}
+#          asset_path: ./caddy-${{ matrix.os }}-${{ matrix.arch }}
+#          asset_name: caddy-${{ matrix.os }}-${{ matrix.arch }}
+#          asset_content_type: application/octet-stream
