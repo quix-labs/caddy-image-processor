@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) Alancolant <contact@alancolant.com>
+Copyright (c) Quix-Labs <contact@alancolant.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
