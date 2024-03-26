@@ -1,8 +1,3 @@
-# Makefile for Caddy Image Processor
-
-# Set CGO_ENABLED to 1 for cgo support
-export CGO_ENABLED=1
-
 # xcaddy parameters
 XCADDY=xcaddy
 
