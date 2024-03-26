@@ -1,9 +1,10 @@
+export CGO_ENABLED=1
+
 # xcaddy parameters
 XCADDY=xcaddy
 
 # Main module path
 MODULE_PATH=github.com/quix-labs/caddy-image-processor
-
 # Output directory
 OUT_DIR=out
 
