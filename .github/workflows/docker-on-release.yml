@@ -1,4 +1,4 @@
-name: Build Static Releases
+name: Build Docker Images
 
 on:
   release:
@@ -20,7 +20,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/suix-labs/caddy-image-processor
+            ghcr.io/quix-labs/caddy-image-processor
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
