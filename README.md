@@ -42,8 +42,16 @@ This repository contains a CaddyServer module for processing images on the fly u
 
   This command compiles Caddy with the image processing module included.
 
-## Usage
 
+### Using prebuilt assets
+
+- You can also install the tool using release assets.
+  
+  Download the appropriate package from the [Releases page](https://github.com/quix-labs/caddy-image-processor/releases), and then follow the instructions provided for your specific platform.
+
+
+
+## Usage
 
 ### Using Docker
 
@@ -53,7 +61,7 @@ docker run -p 80:80 -v $PWD/Caddyfile:/etc/caddy/Caddyfile -d ghcr.io/quix-labs/
 
 Your can see more information in the [official docker documentation for caddy](https://hub.docker.com/_/caddy)
 
-### Using xcaddy build
+### Using xcaddy build / prebuilt assets
 
 ```bash
 /path/to/your/caddy run --config /etc/caddy/Caddyfile
