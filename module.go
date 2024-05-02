@@ -54,12 +54,12 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		return responseRecorder.WriteResponse()
 	}
 
+	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
+	w.Header().Set("Content-Type", "image/"+bimg.NewImage(newImage).Type())
+
 	if _, err = w.Write(newImage); err != nil {
 		return err
 	}
-
-	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
-	w.Header().Set("Content-Type", "image/"+bimg.NewImage(newImage).Type())
 
 	return nil
 }
