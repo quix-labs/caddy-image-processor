@@ -5,51 +5,65 @@
 This repository contains a CaddyServer module for processing images on the fly using libvips.
 
 ## Features
+
 - Automatic image processing based on URL query parameters
 - Supports resizing, rotating, cropping, quality adjustments, format conversion, and more
 - Efficient processing using libvips
 
 ## Prerequisites
+
 - [Caddy](https://caddyserver.com/) installed on your system
 - [libvips](https://libvips.github.io/libvips/install.html) installed on your system
 - [libvips-dev](https://libvips.github.io/libvips/install.html) installed on your system
 
-## Building with xcaddy
+## Installation and Configuration
 
-Before building the module, ensure you have `xcaddy` installed on your system. You can install it using the following command:
+### Using Docker
 
-```bash
-go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-```
+- Pull the Docker image from the GitHub Container Registry:
+    ```bash
+    docker pull ghcr.io/quix-labs/caddy-image-processor:latest
+    ```
 
-To build this module into Caddy, run the following command:
+### Using xcaddy
 
-```bash
-CGO_ENABLED=1 xcaddy build --with github.com/quix-labs/caddy-image-processor
-```
+- Before building the module, ensure you have `xcaddy` installed on your system. You can install it using the following
+  command:
 
-This command compiles Caddy with the image processing module included.
+  ```bash
+  go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+  ```
+
+- To build this module into Caddy, run the following command:
+
+  ```bash
+  CGO_ENABLED=1 xcaddy build --with github.com/quix-labs/caddy-image-processor
+  ```
+
+  This command compiles Caddy with the image processing module included.
 
 ## Usage
 
-Follow these steps to utilize the image processing capabilities:
 
-1. Install Caddy and libvips on your system.
-2. Build Caddy with the image processing module using xcaddy.
-3. Configure your Caddyfile to include the image processing module for specific routes or sites.
-4. Start Caddy, and access your images with processing options via URL query parameters.
+### Using Docker
 
-## Available Query Parameters
+```bash
+docker run -p 80:80 -v $PWD/Caddyfile:/etc/caddy/Caddyfile -d ghcr.io/quix-labs/caddy-image-processor:latest
+```
 
-- or: Orientation (e.g., 90, 180, 270)
-- crop: Crop (1 for true, 0 for false)
-- w: Width
-- h: Height
-- blur: Blur amount
-- q: Quality
-- fm: Format (e.g., jpg, png, gif, webp, avif)
+Your can see more information in the [official docker documentation for caddy](https://hub.docker.com/_/caddy)
+
+### Using xcaddy build
+
+```bash
+/path/to/your/caddy run --config /etc/caddy/Caddyfile
+```
+
+Your can see more information in the [official documentation for caddy](https://caddyserver.com/docs/build#package-support-files-for-custom-builds-for-debianubunturaspbian)
+
 
 ## Example Caddyfile
+
 ```plaintext
 {
     order image_processor before respond
@@ -62,7 +76,19 @@ localhost {
 }
 ```
 
-In this example, requests to `/images*` undergo processing by the image processor module before being served by the reverse proxy.
+In this example, all requests undergo processing by the image processor module before being served by the
+caddy.
+
+## Available Query Parameters
+
+- or: Orientation (e.g., 90, 180, 270)
+- crop: Crop (1 for true, 0 for false)
+- w: Width
+- h: Height
+- blur: Blur amount
+- q: Quality
+- fm: Format (e.g., jpg, png, gif, webp, avif)
+
 
 ## Planned Features
 
@@ -71,7 +97,8 @@ The following features are planned for future implementation:
 - FLIP parameter
 - CROP NOT GLIDE COMPLIANT parameter adjustments
 - Additional parameters: fit, dpr, bri, con, gam, sharp
-- Parameters for adding watermark: pixel, filt, mark, markw, markh, markx, marky, markpad, markpos, markalpha, bg, border
+- Parameters for adding watermark: pixel, filt, mark, markw, markh, markx, marky, markpad, markpos, markalpha, bg,
+  border
 
 ## Development
 
@@ -82,7 +109,7 @@ To contribute to the development of Caddy Image Processor, follow these steps:
    ```bash
    git clone https://github.com/quix-labs/caddy-image-processor.git
    ```
-   
+
 3. Navigate to the project directory:
 4. Install `xcaddy` if you haven't already:
     ```bash
@@ -107,7 +134,6 @@ To contribute to the development of Caddy Image Processor, follow these steps:
 
 - [COLANT Alan](https://github.com/alancolant)
 - [All Contributors](../../contributors)
-
 
 ## License
 

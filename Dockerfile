@@ -1,8 +1,5 @@
 FROM caddy:builder-alpine AS builder
 
-LABEL org.opencontainers.image.source="https://github.com/quix-labs/caddy-image-processor"
-
-
 RUN apk add --update --no-cache make vips-dev gcc musl-dev
 
 ADD . .
