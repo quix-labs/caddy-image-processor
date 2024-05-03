@@ -12,7 +12,7 @@ This repository contains a CaddyServer module for processing images on the fly u
 
 ## Prerequisites
 
-- [Caddy](https://caddyserver.com/) installed on your system
+- [Caddy >= 2.8.0-beta.1](https://caddyserver.com/) installed on your system
 - [libvips](https://libvips.github.io/libvips/install.html) installed on your system
 - [libvips-dev](https://libvips.github.io/libvips/install.html) installed on your system
 
@@ -72,10 +72,6 @@ the [official documentation for caddy](https://caddyserver.com/docs/build#packag
 ## Example Caddyfile
 
 ```plaintext
-{
-    order image_processor before respond
-}
-
 localhost {
     root * /your-images-directory
     file_server
