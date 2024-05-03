@@ -42,14 +42,13 @@ This repository contains a CaddyServer module for processing images on the fly u
 
   This command compiles Caddy with the image processing module included.
 
-
 ### Using prebuilt assets
 
 - You can also install the tool using release assets.
-  
-  Download the appropriate package from the [Releases page](https://github.com/quix-labs/caddy-image-processor/releases), and then follow the instructions provided for your specific platform.
 
-
+  Download the appropriate package from
+  the [Releases page](https://github.com/quix-labs/caddy-image-processor/releases), and then follow the instructions
+  provided for your specific platform.
 
 ## Usage
 
@@ -67,8 +66,8 @@ Your can see more information in the [official docker documentation for caddy](h
 /path/to/your/caddy run --config /etc/caddy/Caddyfile
 ```
 
-Your can see more information in the [official documentation for caddy](https://caddyserver.com/docs/build#package-support-files-for-custom-builds-for-debianubunturaspbian)
-
+Your can see more information in
+the [official documentation for caddy](https://caddyserver.com/docs/build#package-support-files-for-custom-builds-for-debianubunturaspbian)
 
 ## Example Caddyfile
 
@@ -89,24 +88,43 @@ caddy.
 
 ## Available Query Parameters
 
-- or: Orientation (e.g., 90, 180, 270)
-- crop: Crop (1 for true, 0 for false)
-- w: Width
-- h: Height
-- blur: Blur amount
-- q: Quality
-- fm: Format (e.g., jpg, png, gif, webp, avif)
-
+| Param | Name          | Description                                                                                             | Type                          |
+|-------|---------------|---------------------------------------------------------------------------------------------------------|-------------------------------|
+| h     | Height        | Image height                                                                                            | Integer                       |
+| w     | Width         | Image width                                                                                             | Integer                       |
+| ah    | AreaHeight    | Area height                                                                                             | Integer                       |
+| aw    | AreaWidth     | Area width                                                                                              | Integer                       |
+| t     | Top           | Y-coordinate of the top-left corner                                                                     | Integer                       |
+| l     | Left          | X-coordinate of the top-left corner                                                                     | Integer                       |
+| q     | Quality       | Image quality (JPEG compression)                                                                        | Integer (default 75)          |
+| cp    | Compression   | Compression level (0-9, 0 = lossless)                                                                   | Integer                       |
+| z     | Zoom          | Zoom level                                                                                              | Integer                       |
+| crop  | Crop          | Whether cropping is enabled                                                                             | Boolean                       |
+| en    | Enlarge       | Whether enlargement is enabled                                                                          | Boolean                       |
+| em    | Embed         | Whether embedding is enabled                                                                            | Boolean                       |
+| flip  | Flip          | Whether vertical flipping is enabled                                                                    | Boolean                       |
+| flop  | Flop          | Whether horizontal flipping is enabled                                                                  | Boolean                       |
+| force | Force         | Whether to force action                                                                                 | Boolean                       |
+| nar   | NoAutoRotate  | Whether auto-rotation is disabled                                                                       | Boolean                       |
+| np    | NoProfile     | Whether profile is disabled                                                                             | Boolean                       |
+| itl   | Interlace     | Whether interlacing is enabled                                                                          | Boolean (default true)        |
+| smd   | StripMetadata | Whether to strip metadata                                                                               | Boolean (default true)        |
+| tr    | Trim          | Whether trimming is enabled                                                                             | Boolean                       |
+| ll    | Lossless      | Whether compression is lossless                                                                         | Boolean                       |
+| th    | Threshold     | Color threshold                                                                                         | Float                         |
+| g     | Gamma         | Gamma correction                                                                                        | Float                         |
+| br    | Brightness    | Brightness                                                                                              | Float                         |
+| c     | Contrast      | Contrast                                                                                                | Float                         |
+| r     | Rotate        | Rotation angle (45, 90, 135, 180, 235, 270, 315)                                                        | Integer                       |
+| b     | GaussianBlur  | Gaussian blur level                                                                                     | Integer                       |
+| bg    | Background    | Background color (white, black, red, magenta, blue, cyan, green, yellow, or hexadecimal format #RRGGBB) | Color                         |
+| fm    | Type          | Image type (jpg, png, gif, webp, avif)                                                                  | Image Type (default original) |
 
 ## Planned Features
 
 The following features are planned for future implementation:
 
-- FLIP parameter
-- CROP NOT GLIDE COMPLIANT parameter adjustments
-- Additional parameters: fit, dpr, bri, con, gam, sharp
-- Parameters for adding watermark: pixel, filt, mark, markw, markh, markx, marky, markpad, markpos, markalpha, bg,
-  border
+- Sharp compliance: fit,...
 
 ## Development
 
