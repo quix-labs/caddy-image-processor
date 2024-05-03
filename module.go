@@ -22,6 +22,8 @@ func init() {
 	httpcaddyfile.RegisterDirectiveOrder("image_processor", "before", "respond")
 }
 
+// Middleware allow user to do image processing on the fly using libvips
+// With simple queries parameters you can resize, convert, crop your served images
 type Middleware struct {
 	logger *zap.Logger
 }
