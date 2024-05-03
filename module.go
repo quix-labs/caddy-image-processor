@@ -33,7 +33,7 @@ func (Middleware) CaddyModule() caddy.ModuleInfo {
 	}
 }
 
-func (m Middleware) Provision(ctx caddy.Context) error {
+func (m *Middleware) Provision(ctx caddy.Context) error {
 	m.logger = ctx.Logger()
 	return nil
 }
@@ -300,7 +300,6 @@ func getOptions(r *http.Request) (bimg.Options, error) {
 			}
 		}
 	}
-
 	return options, nil
 }
 
