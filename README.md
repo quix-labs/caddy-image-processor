@@ -15,7 +15,7 @@ This repository contains a CaddyServer module for processing images on the fly u
 
 - [Caddy >= 2.8.0-beta.1](https://caddyserver.com/) installed on your system
 - [libvips](https://libvips.github.io/libvips/install.html) installed on your system
-- [libvips-dev](https://libvips.github.io/libvips/install.html) installed on your system
+- [libvips-dev](https://libvips.github.io/libvips/install.html) installed on your system (only for xcaddy build)
 
 ## Installation and Configuration
 
