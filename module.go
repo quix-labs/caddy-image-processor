@@ -75,11 +75,14 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		return responseRecorder.WriteResponse()
 	}
 
-	// Remove intercepted headers from buffer
-	for header, _ := range w.Header() {
-		w.Header().Del(header)
-	}
+	// Remove proxied invalid header
+	w.Header().Del("Content-Type")
+	w.Header().Del("Content-Length")
+	w.Header().Del("Content-Encoding")
+	w.Header().Del("Vary")
+	w.Header().Del("ETag")
 
+	// Set new headers
 	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
 	w.Header().Set("Content-Type", "image/"+bimg.DetermineImageTypeName(newImage))
 
