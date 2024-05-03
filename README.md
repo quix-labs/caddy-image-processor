@@ -117,6 +117,23 @@ caddy.
 | bg    | Background    | Background color (white, black, red, magenta, blue, cyan, green, yellow, or hexadecimal format #RRGGBB) | Color                         |
 | fm    | Type          | Image type (jpg, png, gif, webp, avif)                                                                  | Image Type (default original) |
 
+## Examples
+
+* Resize an image to a width of 400 pixels and a height of 300 pixels:
+    * http://example.com/image.jpg?w=400&h=300
+* Crop an image to a width of 200 pixels and a height of 150 pixels starting from the top-left corner (x=50, y=50):
+    * http://example.com/image.jpg?w=200&h=150&t=50&l=50&crop=true
+* Adjust the quality of the image to 80:
+    * http://example.com/image.jpg?q=80
+* Convert an image to PNG format and apply a Gaussian blur of 5:
+    * http://example.com/image.jpg?fm=png&b=5
+* Rotate an image by 180 degrees and flip it horizontally:
+    * http://example.com/image.jpg?r=180&flop=true
+* Apply a color threshold of 0.5 and adjust the brightness to -10:
+    * http://example.com/image.jpg?th=0.5&br=-10
+* Convert an image to AVIF format with lossless compression:
+    * http://example.com/image.jpg?fm=avif&ll=true
+
 ## Planned Features
 
 The following features are planned for future implementation:
