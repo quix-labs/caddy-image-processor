@@ -72,10 +72,19 @@ the [official documentation for caddy](https://caddyserver.com/docs/build#packag
 
 ## Example Caddyfile
 
+### Using file_server
 ```plaintext
 localhost {
-    root * /your-images-directory
+    root /your-images-directory
     file_server
+    image_processor
+}
+```
+
+### Using reverse_proxy
+```plaintext
+localhost {
+    reverse_proxy your-domain.com
     image_processor
 }
 ```

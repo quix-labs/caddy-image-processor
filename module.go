@@ -8,6 +8,10 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/h2non/bimg"
+	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/compress/zstd"
+	"go.uber.org/zap"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -18,13 +22,20 @@ func init() {
 	httpcaddyfile.RegisterDirectiveOrder("image_processor", "before", "respond")
 }
 
-type Middleware struct{}
+type Middleware struct {
+	logger *zap.Logger
+}
 
 func (Middleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
 		ID:  "http.handlers.image_processor",
 		New: func() caddy.Module { return new(Middleware) },
 	}
+}
+
+func (m Middleware) Provision(ctx caddy.Context) error {
+	m.logger = ctx.Logger()
+	return nil
 }
 
 func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
@@ -46,26 +57,85 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		return responseRecorder.WriteResponse()
 	}
 
-	options, err := getOptions(r)
+	decoded, err := m.getDecodedBufferFromResponse(&responseRecorder)
 	if err != nil {
-		return err
+		m.logger.Error("error getting initial response", zap.Error(err))
+		return responseRecorder.WriteResponse()
 	}
 
-	newImage, err := bimg.NewImage(responseRecorder.Buffer().Bytes()).Process(options)
+	options, err := getOptions(r)
 	if err != nil {
+		m.logger.Error("error parsing options", zap.Error(err))
 		return responseRecorder.WriteResponse()
+	}
+
+	newImage, err := bimg.NewImage(decoded).Process(options)
+	if err != nil {
+		m.logger.Error("error processing image", zap.Error(err))
+		return responseRecorder.WriteResponse()
+	}
+
+	// Remove intercepted headers from buffer
+	for header, _ := range w.Header() {
+		w.Header().Del(header)
 	}
 
 	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
 	w.Header().Set("Content-Type", "image/"+bimg.DetermineImageTypeName(newImage))
 
 	if _, err = w.Write(newImage); err != nil {
-		return err
+		m.logger.Error("error writing processed image", zap.Error(err))
+		return responseRecorder.WriteResponse()
 	}
 
 	return nil
 }
 
+func (m *Middleware) getDecodedBufferFromResponse(r *caddyhttp.ResponseRecorder) ([]byte, error) {
+
+	encoding := (*r).Header().Get("Content-Encoding")
+	if encoding == "" {
+		return (*r).Buffer().Bytes(), nil
+	}
+
+	if encoding == "gzip" {
+		decoder, err := gzip.NewReader((*r).Buffer())
+		if err != nil {
+			return nil, err
+		}
+		defer func(decoder *gzip.Reader) {
+			err := decoder.Close()
+			if err != nil {
+				return
+			}
+		}(decoder)
+
+		decodedOut := bytes.Buffer{}
+		_, err = io.Copy(&decodedOut, decoder)
+		if err != nil {
+			return nil, err
+		}
+		return decodedOut.Bytes(), nil
+	}
+
+	if encoding == "zstd" {
+		// Try decode zstd
+		var decoder, err = zstd.NewReader((*r).Buffer(), zstd.WithDecoderConcurrency(0))
+		if err != nil {
+			return nil, err
+		}
+		defer decoder.Close()
+		decodedOut := bytes.Buffer{}
+		_, err = io.Copy(&decodedOut, decoder)
+		if err != nil {
+			return nil, err
+		}
+		return decodedOut.Bytes(), nil
+	}
+
+	return nil, fmt.Errorf("unsupported encoding: %s", encoding)
+
+}
 func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	return nil
 
@@ -239,6 +309,7 @@ func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error)
 
 // Interface guards
 var (
+	_ caddy.Provisioner           = (*Middleware)(nil)
 	_ caddyhttp.MiddlewareHandler = (*Middleware)(nil)
 	_ caddyfile.Unmarshaler       = (*Middleware)(nil)
 )
