@@ -1,4 +1,5 @@
 [![Build Static Releases](https://github.com/quix-labs/caddy-image-processor/actions/workflows/build-on-release.yml/badge.svg)](https://github.com/quix-labs/caddy-image-processor/actions/workflows/build-on-release.yml)
+[![Build Docker](https://github.com/quix-labs/caddy-image-processor/actions/workflows/docker-on-release.yml/badge.svg)](https://github.com/quix-labs/caddy-image-processor/actions/workflows/docker-on-release.yml)
 
 # Caddy Image Processor
 
