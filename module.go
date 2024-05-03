@@ -72,6 +72,7 @@ func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 }
 
 func getOptions(r *http.Request) (bimg.Options, error) {
+
 	options := bimg.Options{
 		Interlace:     true,
 		StripMetadata: true,
@@ -112,109 +113,121 @@ func getOptions(r *http.Request) (bimg.Options, error) {
 		"fm":    &options.Type,               // bimg.Type
 	}
 
-	for param, dest := range parameters {
-		if value := r.FormValue(param); value != "" {
-			var err error
-			switch dest.(type) {
-			case *int:
-				dest := dest.(*int)
-				if *dest, err = strconv.Atoi(value); err != nil {
-					return options, err
-				}
+	if err := r.ParseForm(); err != nil {
+		return options, err
+	}
 
-			case *bool:
-				dest := dest.(*bool)
-				if *dest, err = strconv.ParseBool(value); err != nil {
-					return options, err
-				}
+	for param, _ := range r.Form {
+		value := r.FormValue(param)
+		if value == "" {
+			continue
+		}
+		dest, exists := parameters[param]
+		if !exists {
+			continue
+		}
 
-			case *float64:
-				dest := dest.(*float64)
-				if *dest, err = strconv.ParseFloat(value, 64); err != nil {
-					return options, err
-				}
+		var err error
+		switch dest.(type) {
+		case *int:
+			dest := dest.(*int)
+			if *dest, err = strconv.Atoi(value); err != nil {
+				return options, err
+			}
 
-			case *string:
-				dest := dest.(*string)
-				*dest = value
+		case *bool:
+			dest := dest.(*bool)
+			if *dest, err = strconv.ParseBool(value); err != nil {
+				return options, err
+			}
 
-			case *bimg.Color:
-				dest := dest.(*bimg.Color)
+		case *float64:
+			dest := dest.(*float64)
+			if *dest, err = strconv.ParseFloat(value, 64); err != nil {
+				return options, err
+			}
 
-				if value == "white" {
-					*dest = bimg.Color{255, 255, 255}
-					break
-				}
-				if value == "black" {
-					*dest = bimg.Color{0, 0, 0}
-					break
-				}
-				if value == "red" {
-					*dest = bimg.Color{255, 0, 0}
-					break
-				}
-				if value == "magenta" {
-					*dest = bimg.Color{255, 0, 255}
-					break
-				}
-				if value == "blue" {
-					*dest = bimg.Color{0, 0, 255}
-					break
-				}
-				if value == "cyan" {
-					*dest = bimg.Color{0, 255, 255}
-					break
-				}
-				if value == "green" {
-					*dest = bimg.Color{0, 255, 0}
-					break
-				}
-				if value == "yellow" {
-					*dest = bimg.Color{255, 255, 0}
-					break
-				}
+		case *string:
+			dest := dest.(*string)
+			*dest = value
 
-				c := bimg.Color{}
-				_, err := fmt.Sscanf(value, "#%02x%02x%02x", &c.R, &c.G, &c.B)
-				if err != nil {
-					return options, fmt.Errorf("possible values for '%s' are white,black,red,magenta,blue,cyan,green,yellow or #xxxxx hex string", param)
-				}
+		case *bimg.Color:
+			dest := dest.(*bimg.Color)
 
-				*dest = c
+			if value == "white" {
+				*dest = bimg.Color{255, 255, 255}
+				break
+			}
+			if value == "black" {
+				*dest = bimg.Color{0, 0, 0}
+				break
+			}
+			if value == "red" {
+				*dest = bimg.Color{255, 0, 0}
+				break
+			}
+			if value == "magenta" {
+				*dest = bimg.Color{255, 0, 255}
+				break
+			}
+			if value == "blue" {
+				*dest = bimg.Color{0, 0, 255}
+				break
+			}
+			if value == "cyan" {
+				*dest = bimg.Color{0, 255, 255}
+				break
+			}
+			if value == "green" {
+				*dest = bimg.Color{0, 255, 0}
+				break
+			}
+			if value == "yellow" {
+				*dest = bimg.Color{255, 255, 0}
+				break
+			}
 
-			case *bimg.Angle:
-				dest := dest.(*bimg.Angle)
-				angle, err := strconv.Atoi(value)
-				if err != nil {
-					return options, err
-				}
+			c := bimg.Color{}
+			_, err := fmt.Sscanf(value, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+			if err != nil {
+				return options, fmt.Errorf("possible values for '%s' are white,black,red,magenta,blue,cyan,green,yellow or #xxxxx hex string", param)
+			}
 
-				switch angle {
-				case 45, 90, 135, 180, 235, 270, 315:
-					*dest = bimg.Angle(angle)
-				default:
-					return options, fmt.Errorf("possible values for '%s' are 45, 90, 135, 180, 235, 270, 315", param)
-				}
+			*dest = c
 
-			case *bimg.ImageType:
-				dest := dest.(*bimg.ImageType)
-				switch value {
-				case "jpg", "jpeg":
-					*dest = bimg.JPEG
-				case "png":
-					*dest = bimg.PNG
-				case "gif":
-					*dest = bimg.GIF
-				case "webp":
-					*dest = bimg.WEBP
-				case "avif":
-					*dest = bimg.AVIF
-				default:
-					return options, fmt.Errorf("possible values for '%s' are jpg, jpeg, png, gif, webp, avif", param)
-				}
+		case *bimg.Angle:
+			dest := dest.(*bimg.Angle)
+			angle, err := strconv.Atoi(value)
+			if err != nil {
+				return options, err
+			}
+
+			switch angle {
+			case 45, 90, 135, 180, 235, 270, 315:
+				*dest = bimg.Angle(angle)
+			default:
+				return options, fmt.Errorf("possible values for '%s' are 45, 90, 135, 180, 235, 270, 315", param)
+			}
+
+		case *bimg.ImageType:
+			dest := dest.(*bimg.ImageType)
+			switch value {
+			case "jpg", "jpeg":
+				*dest = bimg.JPEG
+			case "png":
+				*dest = bimg.PNG
+			case "gif":
+				*dest = bimg.GIF
+			case "webp":
+				*dest = bimg.WEBP
+			case "avif":
+				*dest = bimg.AVIF
+			default:
+				return options, fmt.Errorf("possible values for '%s' are jpg, jpeg, png, gif, webp, avif", param)
 			}
 		}
 	}
+
 	return options, nil
 }
 
