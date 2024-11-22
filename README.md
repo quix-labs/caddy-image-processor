@@ -72,6 +72,7 @@ the [official documentation for caddy](https://caddyserver.com/docs/build#packag
 ## Example Caddyfile
 
 ### Using file_server
+
 ```plaintext
 localhost {
     root /your-images-directory
@@ -81,6 +82,7 @@ localhost {
 ```
 
 ### Using reverse_proxy
+
 ```plaintext
 localhost {
     reverse_proxy your-domain.com
@@ -141,6 +143,53 @@ caddy.
     * http://example.com/image.jpg?th=0.5&br=-10
 * Convert an image to AVIF format with lossless compression:
     * http://example.com/image.jpg?fm=avif&ll=true
+
+## Advanced Configuration
+
+This configuration allows you to control error handling with `on_fail` and `on_security_fail`.
+
+You can also manage query parameter processing using `allowed_params` and `disallowed_params`.
+
+This gives you fine-grained control over image processing in your Caddy server.
+
+
+### Example with `on_fail` and Security Configuration
+```plaintext
+localhost {
+    image_processor {
+        on_fail bypass # Default value
+        security {
+            on_security_fail ignore # Default value
+            
+            disallowed_params w r ... # These parameters are disallowed in the image processing request. You can also use allowed_params to restrict parameters further.
+            # Note: 'allowed_params' and 'disallowed_params' cannot be used together. You must choose one or the other.
+        }
+    }
+}
+```
+
+### Explanation:
+
+* `on_fail`:
+    * `bypass` (default value): If any error occurs, the original, unprocessed image will be returned.
+    * `abort`: If an error occurs, a 500 Internal Server Error response will be returned.
+
+
+* `on_security_fail`:
+    * `ignore` (default value): If any security checks fail, they are ignored, and the image processing continues.
+    * `bypass`: If any security checks fail, the original, unprocessed image will be returned.
+    * `abort`: If any security checks fail, a 400 Bad Request response will be returned.
+
+
+* **Security Configuration** (`disallowed_params` vs `allowed_params`):
+  * `disallowed_params`: Specifies which query parameters are not allowed.
+    
+    For example, parameters like w (width) and r (rotation) can be restricted.
+
+  * `allowed_params`: Specify which query parameters are allowed. As an alternative to `disallowed_params`.
+
+  *  **Important**: You cannot use both allowed_params and disallowed_params in the same configuration.
+
 
 ## Planned Features
 

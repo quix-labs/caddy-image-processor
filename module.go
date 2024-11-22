@@ -2,6 +2,8 @@ package CADDY_FILE_SERVER
 
 import (
 	"bytes"
+	"cmp"
+	"errors"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
@@ -17,18 +19,31 @@ import (
 )
 
 func init() {
-	caddy.RegisterModule(Middleware{})
+	caddy.RegisterModule(&Middleware{})
 	httpcaddyfile.RegisterHandlerDirective("image_processor", parseCaddyfile)
 	httpcaddyfile.RegisterDirectiveOrder("image_processor", "before", "respond")
 }
 
+// OnFail represents the possible values for the "on_fail" directive.
+type OnFail string
+
+const (
+	// OnFailAbort returns a 500 Internal Server Error to the client.
+	OnFailAbort OnFail = "abort"
+
+	// OnFailBypass forces the response to return the initial (unprocessed) image.
+	OnFailBypass OnFail = "bypass"
+)
+
 // Middleware allow user to do image processing on the fly using libvips
 // With simple queries parameters you can resize, convert, crop your served images
 type Middleware struct {
-	logger *zap.Logger
+	logger   *zap.Logger
+	OnFail   OnFail           `json:"on_fail,omitempty"`
+	Security *SecurityOptions `json:"security,omitempty"`
 }
 
-func (Middleware) CaddyModule() caddy.ModuleInfo {
+func (*Middleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
 		ID:  "http.handlers.image_processor",
 		New: func() caddy.Module { return new(Middleware) },
@@ -37,11 +52,34 @@ func (Middleware) CaddyModule() caddy.ModuleInfo {
 
 func (m *Middleware) Provision(ctx caddy.Context) error {
 	m.logger = ctx.Logger()
+
+	// Set default configuration
+	m.OnFail = cmp.Or(m.OnFail, OnFailBypass)
+	if m.Security != nil {
+		if err := m.Security.Provision(ctx); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+func (m *Middleware) Validate() error {
+	switch m.OnFail {
+	case OnFailAbort, OnFailBypass:
+		// Valid values
+	default:
+		return fmt.Errorf("invalid value for on_fail: '%s' (expected 'abort', or 'bypass')", m.OnFail)
+	}
 
+	if m.Security != nil {
+		if err := m.Security.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	//Automatic return if not options set
 	if r.URL.RawQuery == "" {
 		return next.ServeHTTP(w, r)
@@ -65,7 +103,43 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		return responseRecorder.WriteResponse()
 	}
 
-	options, err := getOptions(r)
+	// Extract form request
+	if err := r.ParseForm(); err != nil {
+		return errors.Join(errors.New("failed to parse form"), err)
+	}
+
+	// Remove unsupported query parameters
+	filterForm(&r.Form)
+
+	// Return if no parameters remains
+	if len(r.Form) == 0 {
+		return responseRecorder.WriteResponse()
+	}
+
+	// Send to security middleware if defined
+	if m.Security != nil {
+		if err := m.Security.ProcessRequestForm(&r.Form); err != nil {
+			if errors.Is(err, BypassRequestError) {
+				return responseRecorder.WriteResponse()
+			}
+
+			var abortRequestError *AbortRequestError
+			if errors.As(err, &abortRequestError) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return nil
+			}
+
+			return err
+		}
+
+		// Return initial image if no parameters remains
+		if len(r.Form) == 0 {
+			return responseRecorder.WriteResponse()
+		}
+	}
+
+	// Parse options
+	options, err := getOptions(&r.Form)
 	if err != nil {
 		m.logger.Error("error parsing options", zap.Error(err))
 		return responseRecorder.WriteResponse()
@@ -74,7 +148,15 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	newImage, err := bimg.NewImage(decoded).Process(options)
 	if err != nil {
 		m.logger.Error("error processing image", zap.Error(err))
-		return responseRecorder.WriteResponse()
+		if m.OnFail == OnFailBypass {
+			return responseRecorder.WriteResponse()
+		}
+		if m.OnFail == OnFailAbort {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return err
+		}
+		return err
+
 	}
 
 	// Remove proxied invalid header
@@ -90,9 +172,48 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 
 	if _, err = w.Write(newImage); err != nil {
 		m.logger.Error("error writing processed image", zap.Error(err))
-		return responseRecorder.WriteResponse()
+		if m.OnFail == OnFailBypass {
+			return responseRecorder.WriteResponse()
+		}
+		if m.OnFail == OnFailAbort {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return err
+		}
+		return err
 	}
 
+	return nil
+}
+
+func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	for d.Next() {
+		for d.NextBlock(0) {
+			switch d.Val() {
+			case "on_fail":
+				// Check if argument provided
+				if !d.NextArg() {
+					return d.ArgErr()
+				}
+				m.OnFail = OnFail(d.Val())
+
+				// Ensure there are no more arguments
+				if d.NextArg() {
+					return d.ArgErr() // More than one argument provided
+				}
+
+				break
+			case "security":
+				m.Security = &SecurityOptions{}
+				if err := m.Security.UnmarshalCaddyfile(d); err != nil {
+					return err
+				}
+				break
+
+			default:
+				return d.Errf("unexpected directive '%s' in image_processor block", d.Val())
+			}
+		}
+	}
 	return nil
 }
 
@@ -141,179 +262,17 @@ func (m *Middleware) getDecodedBufferFromResponse(r *caddyhttp.ResponseRecorder)
 	return nil, fmt.Errorf("unsupported encoding: %s", encoding)
 
 }
-func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
-	return nil
-
-}
-
-func getOptions(r *http.Request) (bimg.Options, error) {
-
-	options := bimg.Options{
-		Interlace:     true,
-		StripMetadata: true,
-	}
-
-	type CustomProcessor struct {
-		Func func(value string) error
-	}
-	parameters := map[string]interface{}{
-		"h":     &options.Height,             // int
-		"w":     &options.Width,              // int
-		"ah":    &options.AreaHeight,         // int
-		"aw":    &options.AreaWidth,          // int
-		"t":     &options.Top,                // int
-		"l":     &options.Left,               // int
-		"q":     &options.Quality,            // int
-		"cp":    &options.Compression,        // int
-		"z":     &options.Zoom,               // int
-		"crop":  &options.Crop,               // bool
-		"en":    &options.Enlarge,            // bool
-		"em":    &options.Embed,              // bool
-		"flip":  &options.Flip,               // bool
-		"flop":  &options.Flop,               // bool
-		"force": &options.Force,              // bool
-		"nar":   &options.NoAutoRotate,       // bool
-		"np":    &options.NoProfile,          // bool
-		"itl":   &options.Interlace,          // bool
-		"smd":   &options.StripMetadata,      // bool
-		"tr":    &options.Trim,               // bool
-		"ll":    &options.Lossless,           // bool
-		"th":    &options.Threshold,          // float64
-		"g":     &options.Gamma,              // float64
-		"br":    &options.Brightness,         // float64
-		"c":     &options.Contrast,           // float64
-		"r":     &options.Rotate,             // bimg.Angle
-		"b":     &options.GaussianBlur.Sigma, // int
-		"bg":    &options.Background,         // bimg.Color
-		"fm":    &options.Type,               // bimg.Type
-	}
-
-	if err := r.ParseForm(); err != nil {
-		return options, err
-	}
-
-	for param, _ := range r.Form {
-		value := r.FormValue(param)
-		if value == "" {
-			continue
-		}
-		dest, exists := parameters[param]
-		if !exists {
-			continue
-		}
-
-		var err error
-		switch dest.(type) {
-		case *int:
-			dest := dest.(*int)
-			if *dest, err = strconv.Atoi(value); err != nil {
-				return options, err
-			}
-
-		case *bool:
-			dest := dest.(*bool)
-			if *dest, err = strconv.ParseBool(value); err != nil {
-				return options, err
-			}
-
-		case *float64:
-			dest := dest.(*float64)
-			if *dest, err = strconv.ParseFloat(value, 64); err != nil {
-				return options, err
-			}
-
-		case *string:
-			dest := dest.(*string)
-			*dest = value
-
-		case *bimg.Color:
-			dest := dest.(*bimg.Color)
-
-			if value == "white" {
-				*dest = bimg.Color{255, 255, 255}
-				break
-			}
-			if value == "black" {
-				*dest = bimg.Color{0, 0, 0}
-				break
-			}
-			if value == "red" {
-				*dest = bimg.Color{255, 0, 0}
-				break
-			}
-			if value == "magenta" {
-				*dest = bimg.Color{255, 0, 255}
-				break
-			}
-			if value == "blue" {
-				*dest = bimg.Color{0, 0, 255}
-				break
-			}
-			if value == "cyan" {
-				*dest = bimg.Color{0, 255, 255}
-				break
-			}
-			if value == "green" {
-				*dest = bimg.Color{0, 255, 0}
-				break
-			}
-			if value == "yellow" {
-				*dest = bimg.Color{255, 255, 0}
-				break
-			}
-
-			c := bimg.Color{}
-			_, err := fmt.Sscanf(value, "#%02x%02x%02x", &c.R, &c.G, &c.B)
-			if err != nil {
-				return options, fmt.Errorf("possible values for '%s' are white,black,red,magenta,blue,cyan,green,yellow or #xxxxx hex string", param)
-			}
-
-			*dest = c
-
-		case *bimg.Angle:
-			dest := dest.(*bimg.Angle)
-			angle, err := strconv.Atoi(value)
-			if err != nil {
-				return options, err
-			}
-
-			switch angle {
-			case 45, 90, 135, 180, 235, 270, 315:
-				*dest = bimg.Angle(angle)
-			default:
-				return options, fmt.Errorf("possible values for '%s' are 45, 90, 135, 180, 235, 270, 315", param)
-			}
-
-		case *bimg.ImageType:
-			dest := dest.(*bimg.ImageType)
-			switch value {
-			case "jpg", "jpeg":
-				*dest = bimg.JPEG
-			case "png":
-				*dest = bimg.PNG
-			case "gif":
-				*dest = bimg.GIF
-			case "webp":
-				*dest = bimg.WEBP
-			case "avif":
-				*dest = bimg.AVIF
-			default:
-				return options, fmt.Errorf("possible values for '%s' are jpg, jpeg, png, gif, webp, avif", param)
-			}
-		}
-	}
-	return options, nil
-}
 
 func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
 	var m Middleware
 	err := m.UnmarshalCaddyfile(h.Dispenser)
-	return m, err
+	return &m, err
 }
 
 // Interface guards
 var (
 	_ caddy.Provisioner           = (*Middleware)(nil)
+	_ caddy.Validator             = (*Middleware)(nil)
 	_ caddyhttp.MiddlewareHandler = (*Middleware)(nil)
 	_ caddyfile.Unmarshaler       = (*Middleware)(nil)
 )
