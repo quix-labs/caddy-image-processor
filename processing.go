@@ -64,7 +64,7 @@ func getOptions(form *url.Values) (bimg.Options, error) {
 		"r":     &options.Rotate,             // bimg.Angle
 		"b":     &options.GaussianBlur.Sigma, // int
 		"bg":    &options.Background,         // bimg.Color
-		"fm":    &options.Type,               // bimg.Type
+		"fm":    &options.Type,               // bimg.ID
 	}
 
 	for param, _ := range *form {
