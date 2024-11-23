@@ -156,7 +156,6 @@ This gives you fine-grained control over image processing in your Caddy server.
 ### Example with `on_fail` and Security Configuration
 ```plaintext
 localhost:80 {
-    import common
     root test-dataset
     file_server
 	
