@@ -155,16 +155,52 @@ This gives you fine-grained control over image processing in your Caddy server.
 
 ### Example with `on_fail` and Security Configuration
 ```plaintext
-localhost {
-    image_processor {
-        on_fail bypass # Default value
+localhost:80 {
+	import common
+	root test-dataset
+	file_server
+	image_processor {
+	    
+	    # Serve original image if image in unprocessable
+	    on_fail bypass	    
+        
+        # Return 500 Internal Server Error if processing fails
+	    # on_fail abort	    
+        
+        
         security {
-            on_security_fail ignore # Default value
+
+            # Use ignore to remove param from processing, all valid param are processed
+            on_security_fail ignore
+
+            # Use abort to return 400 Bad Request when fails
+            # on_security_fail abort
+
+            # Use bypass to serve original image without processing
+            # on_security_fail bypass
+
+            # Explicitely disable rotate capabilities
+            disallowed_params r
             
-            disallowed_params w r ... # These parameters are disallowed in the image processing request. You can also use allowed_params to restrict parameters further.
-            # Note: 'allowed_params' and 'disallowed_params' cannot be used together. You must choose one or the other.
+            # As an alternative use this to only accept width and height processing 
+            # allowed_params w h 
+            
+            constraints {
+                h range 60 480
+
+                w {
+                    values 60 130 240 480 637
+
+                    # Shortcut range 60 637
+                    range {
+                        from 60
+                        to 637
+                    }
+                }
+
+            }
         }
-    }
+	}
 }
 ```
 
@@ -189,6 +225,7 @@ localhost {
   * `allowed_params`: Specify which query parameters are allowed. As an alternative to `disallowed_params`.
 
   *  **Important**: You cannot use both allowed_params and disallowed_params in the same configuration.
+  *  `constraints`: You san specify constraints for each parameter (see example)
 
 
 ## Planned Features

@@ -26,13 +26,7 @@ type SecurityOptions struct {
 	OnSecurityFail   OnSecurityFail `json:"on_security_fail,omitempty"`
 	AllowedParams    *[]string      `json:"allowed_params,omitempty"`
 	DisallowedParams *[]string      `json:"disallowed_params,omitempty"`
-}
-
-func MakeSecurityOptions() *SecurityOptions {
-	return &SecurityOptions{
-		OnSecurityFail: OnSecurityFailIgnore, // DEFAULT
-		AllowedParams:  &[]string{"w"},
-	}
+	Constraints      *Constraints   `json:"constraints,omitempty"`
 }
 
 // ProcessRequestForm
@@ -74,13 +68,18 @@ func (s *SecurityOptions) ProcessRequestForm(form *url.Values) error {
 		}
 	}
 
+	if s.Constraints != nil {
+		if err := s.Constraints.ProcessRequestForm(form, s.OnSecurityFail); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 // Provision Set default values if not defined
 func (s *SecurityOptions) Provision(ctx caddy.Context) error {
 	s.OnSecurityFail = cmp.Or(s.OnSecurityFail, OnSecurityFailIgnore)
-
 	return nil
 }
 
@@ -90,7 +89,14 @@ func (s *SecurityOptions) Validate() error {
 	case OnSecurityFailIgnore, OnSecurityFailAbort, OnSecurityFailBypass:
 		// Valid values
 	default:
-		return fmt.Errorf("invalid value for on_security_fail: '%s' (expected 'ignore', 'abort', or 'bypass')", s.OnSecurityFail)
+		return fmt.Errorf("invalid value for 'on_security_fail': '%s' (expected 'ignore', 'abort', or 'bypass')", s.OnSecurityFail)
+	}
+
+	// Validate constraints if exists
+	if s.Constraints != nil {
+		if err := s.Constraints.Validate(); err != nil {
+			return err
+		}
 	}
 
 	// Check that AllowedParams and DisallowedParams are not both specified
@@ -98,9 +104,11 @@ func (s *SecurityOptions) Validate() error {
 		return fmt.Errorf("'allowed_params' and 'disallowed_params' cannot be specified together")
 	}
 
-	// Ensure that at least one of AllowedParams or DisallowedParams is specified
-	if (s.AllowedParams == nil || len(*s.AllowedParams) == 0) && (s.DisallowedParams == nil || len(*s.DisallowedParams) == 0) {
-		return fmt.Errorf("either 'allowed_params' or 'disallowed_params' must be specified")
+	// Ensure that at least one of AllowedParams or DisallowedParams or 'Constraints' is specified
+	if (s.AllowedParams == nil || len(*s.AllowedParams) == 0) &&
+		(s.DisallowedParams == nil || len(*s.DisallowedParams) == 0) &&
+		(s.Constraints == nil || len(*s.Constraints) == 0) {
+		return fmt.Errorf("either 'allowed_params', 'disallowed_params', or 'constraints' must be specified")
 	}
 
 	// Validate that all elements in AllowedParams are in availableParams
@@ -133,7 +141,7 @@ func (s *SecurityOptions) Validate() error {
 }
 
 func (s *SecurityOptions) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
-	for d.NextBlock(1) {
+	for nesting := d.Nesting(); d.NextBlock(nesting); {
 		switch d.Val() {
 		case "on_security_fail":
 			// Check if argument provided
@@ -160,6 +168,13 @@ func (s *SecurityOptions) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				return d.Err("disallowed_params requires at least one parameter")
 			}
 			s.DisallowedParams = &disallowedParams
+			break
+		case "constraints":
+			// If it's a nested block, process it
+			s.Constraints = &Constraints{}
+			if err := s.Constraints.UnmarshalCaddyfile(d); err != nil {
+				return err
+			}
 			break
 		default:
 			return d.Errf("unexpected directive '%s' in security block", d.Val())
