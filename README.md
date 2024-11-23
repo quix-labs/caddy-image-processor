@@ -156,16 +156,17 @@ This gives you fine-grained control over image processing in your Caddy server.
 ### Example with `on_fail` and Security Configuration
 ```plaintext
 localhost:80 {
-	import common
-	root test-dataset
-	file_server
-	image_processor {
+    import common
+    root test-dataset
+    file_server
+	
+    image_processor {
 	    
-	    # Serve original image if image in unprocessable
-	    on_fail bypass	    
+        # Serve original image if image in unprocessable
+        on_fail bypass	    
         
         # Return 500 Internal Server Error if processing fails
-	    # on_fail abort	    
+        # on_fail abort	    
         
         security {
 
