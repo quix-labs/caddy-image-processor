@@ -167,7 +167,6 @@ localhost:80 {
         # Return 500 Internal Server Error if processing fails
 	    # on_fail abort	    
         
-        
         security {
 
             # Use ignore to remove param from processing, all valid param are processed
@@ -197,10 +196,9 @@ localhost:80 {
                         to 637
                     }
                 }
-
             }
         }
-	}
+    }
 }
 ```
 
