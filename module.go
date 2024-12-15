@@ -138,6 +138,20 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 		}
 	}
 
+	// Generate specific ETag ig necessary
+	processedEtag := getProcessedImageEtag(responseRecorder.Header().Get("ETag"), &r.Form)
+	if processedEtag != "" {
+		responseRecorder.Header().Del("ETag") // Remove initial ETag
+		w.Header().Set("ETag", processedEtag)
+
+		// Check If-None-Match header to avoid reprocessing
+		ifNoneMatchHeader := r.Header.Get("If-None-Match")
+		if ifNoneMatchHeader != "" && ifNoneMatchHeader == processedEtag {
+			w.WriteHeader(http.StatusNotModified)
+			return nil
+		}
+	}
+
 	// Parse options
 	options, err := getOptions(&r.Form)
 	if err != nil {
@@ -164,7 +178,7 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 	w.Header().Del("Content-Length")
 	w.Header().Del("Content-Encoding")
 	w.Header().Del("Vary")
-	w.Header().Del("ETag")
+	//w.Header().Del("ETag")
 
 	// Set new headers
 	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
