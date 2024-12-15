@@ -178,7 +178,6 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 	w.Header().Del("Content-Length")
 	w.Header().Del("Content-Encoding")
 	w.Header().Del("Vary")
-	//w.Header().Del("ETag")
 
 	// Set new headers
 	w.Header().Set("Content-Length", strconv.Itoa(len(newImage)))
