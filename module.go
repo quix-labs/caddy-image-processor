@@ -138,7 +138,7 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 		}
 	}
 
-	// Generate specific ETag ig necessary
+	// Generate specific ETag if necessary
 	processedEtag := getProcessedImageEtag(responseRecorder.Header().Get("ETag"), &r.Form)
 	if processedEtag != "" {
 		responseRecorder.Header().Del("ETag") // Remove initial ETag
