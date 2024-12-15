@@ -6,6 +6,7 @@ toolchain go1.22.2
 
 require (
 	github.com/caddyserver/caddy/v2 v2.8.4
+	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/klauspost/compress v1.17.11
 	go.uber.org/zap v1.27.0
@@ -24,7 +25,6 @@ require (
 	github.com/caddyserver/certmagic v0.21.3 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/dgraph-io/badger v1.6.2 // indirect

@@ -21,10 +21,8 @@ func getProcessedImageEtag(initialEtag string, form *url.Values) string {
 		return initialEtag
 	}
 
-	// Create a slice to store the sorted parameters
 	var params []string
 	for key, values := range *form {
-		// Add only the first value for each key (to avoid duplicates)
 		params = append(params, key+"="+values[0])
 	}
 
@@ -34,13 +32,10 @@ func getProcessedImageEtag(initialEtag string, form *url.Values) string {
 	// Use a bytes.Buffer to join parameters efficiently
 	var buffer bytes.Buffer
 	for _, param := range params {
-		if buffer.Len() > 0 {
-			buffer.WriteString("&")
-		}
 		buffer.WriteString(param)
 	}
 
-	// Generate the SHA1 hash of the concatenated parameters
+	// Generate the hash of the concatenated parameters
 	hash := xxhash.New()
 	_, err := hash.Write(buffer.Bytes())
 	if err != nil {
